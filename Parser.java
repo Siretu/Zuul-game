@@ -132,9 +132,7 @@ public class Parser
 	    			}
 	    		}
 	    		name = o.getName().toLowerCase();
-	    		System.out.println(commandWords[1] + " == " + name);
 	    		if(commandWords[1].equals(name)){
-	    			System.out.println("Found target");
 	    			foundTarget = true;
 		    		Class myClass = o.getClass();
 		    		for(Method m : myClass.getMethods()){
@@ -190,7 +188,7 @@ public class Parser
     		} else if(command.equals("quit")){
     			finished = true;
     		} else {
-    			System.out.println("I beg you pardon?");
+    			System.out.println("I beg your pardon?");
     		}
     	}
     	return finished;

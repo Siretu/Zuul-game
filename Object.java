@@ -131,7 +131,7 @@ public class Object {
 	@Command
 	public void move(Player p){
 		if(this.getId().equals("orientalRug")){
-			if(p.getCurrentRoom().getExit("down").getLockedMessage().equals("The trap door is closed")){
+			if(p.getCurrentRoom().getExit("down").getLockedMessage().equals("The trap door is closed") || p.getCurrentRoom().getExit("down").getLockedMessage().equals("")){
 				System.out.println("Having moved the carpet previously, you find it impossible to move it again.");
 			} else {
 				System.out.println("With a great effort, the carpet is moved to one side of the room, revealing the dusty cover of a closed trapdoor.");
