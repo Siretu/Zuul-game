@@ -1,29 +1,29 @@
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
 /**
- * This class is part of the "Cruiser Command" application. 
- * "Cruiser Command" is a very simple, text based adventure game. Users should
- *  try to escape the spaceship before it is destroyed.
+ * This class is part of the "World of KROZ" application. 
+ * "World of KROZ" is a very simple, text based adventure game. Users should
+ *  try to find a lucia bun before they starve
  *  
  * This parser reads user input and tries to interpret it as an "Adventure"
  * command. Every time it is called it reads a line from the terminal and
- * tries to interpret the line as a two-word command. It returns the command
- * as an object of class Command.
+ * tries to interpret the line by going finding a target, as specified by the user,
+ * in the current room. It then tries to find the issued command as a class method
+ * in the target it found.
  *
  * The parser has a set of known command words. It checks user input against
- * the known commands, and if the input is not one of the known commands, it
- * returns a command object that is marked as an unknown command.
+ * the known commands if it can't find a target or a method-command in the target's
+ * class.
  * 
- * @author  Michael KÃ¶lling and David J. Barnes
- * @version 2011.08.10
+ * @author  Erik Ihrén
+ * @version 2012.12.01
  */
+
 public class Parser 
 {
-    //private CommandWords commands;  // holds all valid command words
     private Scanner reader;         // source of command input
 
     /**
@@ -31,17 +31,18 @@ public class Parser
      */
     public Parser() 
     {
-        //commands = new CommandWords();
         reader = new Scanner(System.in);
     }
 
     /**
-     * @return The next command from the user.
+     * Gets a command from the player. This method handles the input of the command
+     * and sends it on to the parse method for parsing.
+     * 
+     * @param player the player that enters the command.
+     * @return Returns true if the user wants to quit. Otherwise it returns false.
      */
-    public boolean getCommand(Room current, Player player){
+    public boolean getCommand(Player player){
         String inputLine;   // will hold the full input line
-        String word1 = null;
-        String word2 = null;
 
         System.out.print("> ");     // print prompt
 
@@ -52,6 +53,9 @@ public class Parser
     /** 
      * Try to go in one direction. If there is an exit, enter the new
      * room, otherwise print an error message.
+     *
+     * @param p			the player who wants to move
+     * @param command	the string command containing the direction the player wants to move.
      */
     private void goRoom(Player p, String command){
     	// Try to leave current room.
@@ -78,18 +82,20 @@ public class Parser
             System.out.println("There is no exit in that direction!");
         }
         else {
-        	Room nextRoom = nextDoor.go(p);
-        	if(nextRoom != null){
+        	Room nextRoom = nextDoor.getConnectedRoom(p);
+        	if(nextRoom != null){ // If the door is not locked
         		Game.moves++;
         		p.setCurrentRoom(nextRoom);
         		System.out.println(p.getCurrentRoom().getLongDescription());
-        		System.out.println(p.getCurrentRoom().getGoString());
         		if(p.getCurrentRoom().getName().equals("Cellar")){
         			p.getCurrentRoom().getExit("up").setLockedMessage("The trapdoor is closed");
+        			p.getCurrentRoom().setDescription("You are in a dark and damp cellar with a narrow passageway leading north.\nOn the west is the bottom of a steep metal\nramp which is unclimbable.");
         			if(p.hasItem("sword")){
         				System.out.println("Your sword is glowing with a faint blue glow.");
         			}
+        			
         		}
+        		// Display time limit messages
         		if(Game.moves == 10){
         			System.out.println("The hunger is worse than anything you've experienced before. Find a luciabun, quickly!");
         		} else if(Game.moves == 15){
@@ -98,43 +104,74 @@ public class Parser
         			System.out.println("You finally give up on life. Your body couldn't survive that long without luciabuns");
         			p.die();
         		}
-        	} else {
+        	} else { // If the door is locked, print the locked message.
         		System.out.println(p.getCurrentRoom().getExit(direction).getLockedMessage());
         	}
         }
     	
     }
     
+    /**
+     * This parser reads user input and tries to interpret it as an "Adventure"
+     * command. Every time it is called it reads a line from the terminal and
+     * tries to interpret the line by going finding a target, as specified by the user,
+     * in the current room. It then tries to find the issued command as a class method
+     * in the target it found.
+     * 
+     * @param command	the string entered in the parser
+     * @param p			the player to use the command for
+     * @return	true if the player wants to stop playing. Otherwise it returns false.
+     */
     public boolean parse(String command, Player p){
     	boolean finished = false;
-    	ArrayList<Object> contents = new ArrayList<Object>(p.getCurrentRoom().getContents());
+    	
+    	// Initial contents of the room. Might be expanded on later on if we find a player or an inventory
+    	ArrayList<GameObject> contents = new ArrayList<GameObject>(p.getCurrentRoom().getContents());
     	String name;
     	String methodName;
-    	String finalMethodName = "";
     	Method finalMethod = null;
     	command = command.toLowerCase();
     	String[] commandWords = command.split(" ");
+    	
+    	// Special fix for break/destroy since I can't make a break command since break is a protected keyword in java.
+    	if(commandWords[0].equals("break")){
+    		commandWords[0] = "destroy";
+    	}
     	if(commandWords.length > 1){ // Multiple words in command
 	    	// Go through all the stuff in the room to find a target for our command
     		int index = 0;
-    		Object o;
+    		GameObject o;
     		boolean foundTarget = false;
+    		boolean executed = true;
+    		int bestMatchLength = 0;
+    		GameObject bestMatch = null;
+    		
 	    	while(index < contents.size()){
 	    		o = contents.get(index);
 	    		index++;
 	    		if(o.getClass() == Player.class){
-	    			for(Object content : ((Player) o).getContents()){
+	    			for(GameObject content : ((Player) o).getContents()){
 	    				contents.add(content);
 	    			}
-	    		} else if(o.getClass() == Inventory.class){
-	    			for(Object content : ((Inventory) o).getObjects()){
+	    		} else if(o.getClass() == Inventory.class && ((Inventory) o ).isOpen()){
+	    			for(GameObject content : ((Inventory) o).getObjects()){
 	    				contents.add(content);
 	    			}
 	    		}
 	    		name = o.getName().toLowerCase();
-	    		if(commandWords[1].equals(name)){
+	    		
+	    		// Search other names
+	    		for(String otherName : o.getOtherNames()){
+	    			if(command.endsWith(otherName)){
+	    				name = otherName;
+	    				break;
+	    			}
+	    		}
+	    		if(command.endsWith(name) && name.length() > bestMatchLength){ // the command targets our current object
 	    			foundTarget = true;
 		    		Class myClass = o.getClass();
+		    		
+		    		// Go through all methods in the class
 		    		for(Method m : myClass.getMethods()){
 		    			if(m.isAnnotationPresent(Command.class)){ // You can only call methods with the @Command annotation
 			    			// Modify method name to remove packages and brackets to get the pure name.
@@ -144,40 +181,39 @@ public class Parser
 				    			methodName = method_split[method_split.length-1].toLowerCase(); // Get the last one
 				    			method_split = methodName.split("\\(");
 				    			methodName = method_split[0];
-				    			if(methodName.equals(commandWords[0])){
+				    			if(methodName.equals(commandWords[0])){ // If we found a command that is the one the player specified in the first word, save it.
 				    				finalMethod = m;
+				    				bestMatchLength = name.length(); // Save the length of the name. A longer name match is most likely better. (eg. prefer "wooden door" to "door")
+				    				bestMatch = o;
 				    			}
 			    			}
-		    			} else {
-		    				//System.out.println(m.toString() + " is not a command.");
 		    			}
-		    			
 		    		}
-		    		if(finalMethod != null){
-		    			try {
-							finalMethod.invoke(o,p);
-						} catch (IllegalArgumentException e) {
-							System.out.println("Wrong arguments");
-							e.printStackTrace();
-						} catch (IllegalAccessException e) {
-							System.out.println("What do you think you're trying to do punk? You don't have the rights!");
-							e.printStackTrace();
-						} catch (InvocationTargetException e) {
-							System.out.println("If you see this, it means something went wrong inside.");
-							e.printStackTrace();
-						}
-		    		} else { // Can't use that command on that target
-	    				System.out.println("I'm sorry but I can't '" + commandWords[0] + "' the " + name);
-	    			}
-		    		break;
 	    		}
 	    	}
-	    	if(!foundTarget){ // Handle special two-word commands that don't target an object.
+    		if(finalMethod != null){
+    			try {
+					finalMethod.invoke(bestMatch,p); // Run the command
+				} catch (IllegalArgumentException e) {
+					System.out.println("Internal error when Reflection tried to invoke a command on the target.");
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					System.out.println("Reflection tried to access something private.");
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					System.out.println("The invoked command gave an error.");
+					e.printStackTrace();
+				}
+    		} else if(!foundTarget) {
 	    		if(commandWords[0].equals("go")){
 	    			goRoom(p,commandWords[1]);
+	    		} else {
+	    			System.out.println("I'm sorry but I can't '" + command + "'");
 	    		}
-	    		
-	    	}
+    		} else { // Can't use that command on that target
+				System.out.println("I'm sorry but I can't '" + commandWords[0] + "' the " + commandWords[1]);
+			}
+    
     	} else { // Handle special cases with one-word commands
     		if(command.equals("inventory") || command.equals("i")){
     			System.out.println(p.getInventory().getList());
@@ -185,21 +221,15 @@ public class Parser
     			System.out.println(p.getCurrentRoom().getLongDescription());
     		} else if(command.equals("n") || command.equals("north") || command.equals("s") || command.equals("south") || command.equals("w") || command.equals("west") || command.equals("e") || command.equals("east") || command.equals("u") || command.equals("up") || command.equals("d") || command.equals("down")){
     			goRoom(p, command);
-    		} else if(command.equals("quit")){
+    		} else if(command.equals("help")){ 
+    			System.out.println("You need to find a lucia bun before the time runs out. \n\nYou can go in a direction (for example south) by typing \"go south\", \"south\" or just \"s\". \nTo go to some special places you might need to specify \"go\" first (for example \"go through\").\n\nThere are a lot of intuitive commands available for you to figure out but the most common ones are:\nhelp, examine, look, south, east, west, north, inventory");
+    		}else if(command.equals("quit")){
     			finished = true;
     		} else {
-    			System.out.println("I beg your pardon?");
+    			System.out.println("Huh?");
     		}
     	}
     	return finished;
     }
     
-    
-    /**
-     * Print out a list of valid command words.
-     */
-//    public void showCommands()
-//    {
-//        commands.showAll();
-//    }
 }
