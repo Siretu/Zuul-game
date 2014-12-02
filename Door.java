@@ -1,5 +1,5 @@
 /**
- * Class Door - a passage between doors in an adventure game.
+ * Class Door - a passage between rooms in an adventure game.
  *
  * This class is part of the "World of KROZ" application. 
  * "World of KROZ" is a very simple, text based adventure game. Users should
@@ -7,7 +7,7 @@
  *  
  * A "Door" represents one passage between two rooms. It can also handle locked passages.
  * 
- * @author  Erik Ihrén
+ * @author  Erik IhrÃ©n
  * @version 2012.12.01
  */
 
