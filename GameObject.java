@@ -10,7 +10,6 @@ import java.util.ArrayList;
  * A "GameObject" class handles all the game objects in the world. A lot of commands can be used
  * on game objects and therefore this class contains a lot of command methods.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
