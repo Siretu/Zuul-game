@@ -13,7 +13,6 @@ import java.util.HashMap;
  * connected to other rooms via doors.  For each existing exit, the room 
  * stores a reference to a door which can connect it to the other room.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
