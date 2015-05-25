@@ -18,7 +18,6 @@ import java.util.Scanner;
  * the known commands if it can't find a target or a method-command in the target's
  * class.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
