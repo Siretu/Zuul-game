@@ -9,7 +9,6 @@ import java.util.ArrayList;
  *  
  * A "Player" class handles the player and monster(s). Keeps track of light source and a personal inventory.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
