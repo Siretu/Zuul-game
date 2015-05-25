@@ -8,7 +8,6 @@
  * An "Item" class handles the items in the world. They extend the GameObject class and works similarly. 
  * Items are meant to be picked up and dropped by players.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
