@@ -11,7 +11,6 @@
  *  rooms, creates the parser and starts the game.  It also evaluates and
  *  executes the commands that the parser returns.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
@@ -24,7 +23,7 @@ public class Game {
      * Create the game and initialize its internal map and also creates the player.
      */
     public Game() {
-    	this.player = new Player("Erik","An ordinary person");
+    	this.player = new Player("Sam","An ordinary person");
         createRooms();
         parser = new Parser();
         moves = 0;
