@@ -10,7 +10,6 @@ import java.util.ArrayList;
  * An "Inventory" represents a collection of objects in the game. It can be opened by the
  * player and has several methods for managing the list of items.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
@@ -79,7 +78,7 @@ public class Inventory extends Item{
 	 */
 	public String correctArticle(String word){
 		word = word.toLowerCase();
-		char[] vowels = {'a','e','i','u','o','y','å','ä','ö'};
+		char[] vowels = {'a','e','i','u','o','y','Ã¥','Ã¤','Ã¶'};
 		for(char c : vowels){
 			if(word.charAt(0) == c){
 				return "an";
