@@ -7,7 +7,6 @@
  *  
  * A "Door" represents one passage between two rooms. It can also handle locked passages.
  * 
- * @author  Erik Ihrén
  * @version 2012.12.01
  */
 
